@@ -215,6 +215,28 @@ function AssignTenantForm({
     </div>
   );
 }
+function getTimeRemaining(grace: string) {
+  const match = grace.match(/^(\d+)([dh])$/); // e.g., "3d" or "12h"
+  if (!match) return '-';
+
+  const value = parseInt(match[1]);
+  const unit = match[2];
+
+  const now = new Date();
+  let graceEnd: Date;
+
+  if (unit === 'd') {
+    graceEnd = new Date(now.getTime() + value * 24 * 60 * 60 * 1000);
+  } else {
+    graceEnd = new Date(now.getTime() + value * 60 * 60 * 1000);
+  }
+
+  const diff = graceEnd.getTime() - now.getTime();
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+  return `${hours}h ${minutes}m`;
+}
 
 // Search Component
 function SearchBar() {
@@ -276,6 +298,9 @@ function UnitsTable({
                 <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Unit</th>
                 <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Tenant Name</th>
                 <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Status</th>
+                              <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Time Remaining
+</th>
+
                 <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Grace</th>
                 <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Power</th>
                 <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Mobile</th>
@@ -284,54 +309,34 @@ function UnitsTable({
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {units.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="text-center py-6 text-muted-foreground italic">
-                    No units found.
-                  </td>
-                </tr>
-              ) : (
-                units.map((unit) => (
-                  <tr key={unit.id} className="hover:bg-muted/50 transition-colors">
-                    <td className="px-6 py-4">{unit.id}</td>
-                    <td className="px-6 py-4">
-                      {(unit.tenant?.toLowerCase() || "") === "vacant" ? (
-                        <span className="text-muted-foreground italic">Vacant</span>
-                      ) : (
-                        unit.tenant
-                      )}
-                    </td>
-                    <td className="px-6 py-4"><StatusBadge status={unit.status} /></td>
-                    <td className="px-6 py-4">{unit.grace}</td>
-                    <td className="px-6 py-4">
-                      <PowerControl
-                        isOn={unit.power}
-                        unitId={unit.id}
-                        togglePower={() => togglePower(unit.id)}
-                      />
-                    </td>
-                    <td className="px-6 py-4">{unit.phone || "-"}</td>
-                    <td className="px-6 py-4">{unit.rent !== undefined ? `TSh ${unit.rent}` : "-"}</td>
-                    <td className="px-6 py-4 flex gap-2">
-                      <button
-                        onClick={() => onAssignClick(unit.id)}
-                        className="p-2 bg-blue-100 hover:bg-blue-200 rounded-md transition-colors"
-                        title="Assign Tenant"
-                      >
-                        <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-                      </button>
-                      <button
-                        onClick={() => deleteUnit(unit.id)}
-                        className="p-2 bg-red-100 hover:bg-red-200 rounded-md transition-colors"
-                        title="Delete Unit"
-                      >
-                        🗑️
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
+  {units.map((unit, index) => (
+    <tr key={index} className="hover:bg-muted/50 transition-colors">
+      <td className="px-6 py-4">
+        <span className="font-medium">{unit.id}</span>
+      </td>
+      <td className="px-6 py-4 text-sm text-muted-foreground">
+        <span className={unit.tenant === 'Vacant' ? 'text-muted-foreground italic' : ''}>{unit.tenant}</span>
+      </td>
+      <td className="px-6 py-4">
+        <StatusBadge status={unit.status} />
+      </td>
+      <td className="px-6 py-4 text-sm text-muted-foreground">
+        {unit.status.toLowerCase() === 'grace period' ? getTimeRemaining(unit.grace) : '-'}
+      </td>
+      <td className="px-6 py-4">
+        <span className="text-sm text-muted-foreground">{unit.grace}</span>
+      </td>
+      <td className="px-6 py-4">
+        <PowerControl isOn={unit.power} unitId={unit.id} />
+      </td>
+      <td className="px-6 py-4">
+        <button className="p-2 hover:bg-accent rounded-md transition-colors">
+          <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+        </button>
+      </td>
+    </tr>
+  ))}
+</tbody>
           </table>
         </div>
       </div>
