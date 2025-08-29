@@ -146,57 +146,85 @@ function AssignTenantForm({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <form className="bg-white rounded-lg p-4 w-96 space-y-2 shadow-lg" onSubmit={handleSubmit}>
-        <h3 className="text-lg font-bold mb-2">Assign Tenant to {unitId}</h3>
+      <form
+        className="bg-white rounded-lg p-4 w-96 space-y-3 shadow-lg"
+        onSubmit={handleSubmit}
+      >
+        <h3 className="text-lg font-bold mb-4">Assign Tenant to {unitId}</h3>
 
-        <input
-          type="text"
-          value={tenant}
-          onChange={(e) => setTenant(e.target.value)}
-          placeholder="Tenant name"
-          className="w-full border border-border rounded px-3 py-2 text-sm"
-          required
-        />
-        <input
-          type="tel"
-          value={mobile}
-          onChange={(e) => setMobile(e.target.value)}
-          placeholder="Tenant mobile"
-          className="w-full border border-border rounded px-3 py-2 text-sm"
-          required
-        />
-        <input
-          type="number"
-          min={0}
-          value={rent}
-          onChange={(e) => setRent(e.target.value)}
-          placeholder="Rent amount"
-          className="w-full border border-border rounded px-3 py-2 text-sm"
-          required
-        />
-        <input
-          type="date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          className="w-full border border-border rounded px-3 py-2 text-sm"
-          required
-        />
-        <select
-          value={leaseDuration}
-          onChange={(e) => setLeaseDuration(e.target.value)}
-          className="w-full border border-border rounded px-3 py-2 text-sm"
-        >
-          <option>1 month</option>
-          <option>2 months</option>
-        </select>
-        <select
-          value={graceDuration}
-          onChange={(e) => setGraceDuration(e.target.value)}
-          className="w-full border border-border rounded px-3 py-2 text-sm"
-        >
-          <option>7 days</option>
-          <option>14 days</option>
-        </select>
+        <div>
+          <label className="block text-sm font-medium mb-1">Tenant Name</label>
+          <input
+            type="text"
+            value={tenant}
+            onChange={(e) => setTenant(e.target.value)}
+            placeholder="Tenant name"
+            className="w-full border border-border rounded px-3 py-2 text-sm"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Phone Number</label>
+          <input
+            type="tel"
+            value={mobile}
+            onChange={(e) => setMobile(e.target.value)}
+            placeholder="Tenant mobile"
+            className="w-full border border-border rounded px-3 py-2 text-sm"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Rent Amount</label>
+          <input
+            type="number"
+            min={0}
+            value={rent}
+            onChange={(e) => setRent(e.target.value)}
+            placeholder="Rent amount"
+            className="w-full border border-border rounded px-3 py-2 text-sm"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Start Date</label>
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="w-full border border-border rounded px-3 py-2 text-sm"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Lease Duration</label>
+          <select
+            value={leaseDuration}
+            onChange={(e) => setLeaseDuration(e.target.value)}
+            className="w-full border border-border rounded px-3 py-2 text-sm"
+          >
+            <option>1 month</option>
+            <option>3 months</option>
+            <option>6 months</option>
+            <option>12 months</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">Grace Period</label>
+          <select
+            value={graceDuration}
+            onChange={(e) => setGraceDuration(e.target.value)}
+            className="w-full border border-border rounded px-3 py-2 text-sm"
+          >
+            <option>7 days</option>
+            <option>14 days</option>
+          </select>
+        </div>
 
         <div className="flex justify-end gap-2 pt-2">
           <button
@@ -217,6 +245,35 @@ function AssignTenantForm({
     </div>
   );
 }
+
+
+function calculateTimeRemaining(startDate?: string, leaseDuration?: string): string {
+  if (!startDate || !leaseDuration) return "-";
+
+  try {
+    const start = new Date(startDate);
+    const [value, unit] = leaseDuration.split(" ");
+    const duration = parseInt(value);
+
+    let endDate = new Date(start);
+    if (unit.toLowerCase().startsWith("day")) {
+      endDate.setDate(start.getDate() + duration);
+    } else if (unit.toLowerCase().startsWith("month")) {
+      endDate.setMonth(start.getMonth() + duration);
+    } else if (unit.toLowerCase().startsWith("year")) {
+      endDate.setFullYear(start.getFullYear() + duration);
+    }
+
+    const today = new Date();
+    const diff = endDate.getTime() - today.getTime();
+    const daysRemaining = Math.ceil(diff / (1000 * 60 * 60 * 24));
+
+    return daysRemaining > 0 ? `${daysRemaining} days` : "Expired";
+  } catch {
+    return "-";
+  }
+}
+
 
 // Search Component
 function SearchBar() {
@@ -278,6 +335,7 @@ function UnitsTable({
                 <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Unit</th>
                 <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Tenant Name</th>
                 <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Status</th>
+                  <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Time Remaining</th>
                 <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Grace</th>
                 <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Power</th>
                 <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Mobile</th>
@@ -285,51 +343,51 @@ function UnitsTable({
                 <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
-              {units.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="text-center py-6 text-muted-foreground italic">
-                    No units found.
-                  </td>
-                </tr>
-              ) : (
-                units.map((unit) => (
-                  <tr key={unit.id} className="hover:bg-muted/50 transition-colors">
-                    <td className="px-6 py-4">{unit.id}</td>
-                    <td className="px-6 py-4">
-                      {unit.tenant || "Unknown"}
-                    </td>
-                    <td className="px-6 py-4"><StatusBadge status={unit.status} /></td>
-                    <td className="px-6 py-4">{unit.grace}</td>
-                    <td className="px-6 py-4">
-                      <PowerControl
-                        isOn={unit.power}
-                        unitId={unit.id}
-                        togglePower={() => togglePower(unit.id)}
-                      />
-                    </td>
-                    <td className="px-6 py-4">{unit.phone || "-"}</td>
-                    <td className="px-6 py-4">{unit.rent !== undefined ? `TSh ${unit.rent}` : "-"}</td>
-                    <td className="px-6 py-4 flex gap-2">
-                      <button
-                        onClick={() => onAssignClick(unit.id)}
-                        className="p-2 bg-blue-100 hover:bg-blue-200 rounded-md transition-colors"
-                        title="Assign Tenant"
-                      >
-                        <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-                      </button>
-                      <button
-                        onClick={() => deleteUnit(unit.id)}
-                        className="p-2 bg-red-100 hover:bg-red-200 rounded-md transition-colors"
-                        title="Delete Unit"
-                      >
-                        🗑️
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
+          <tbody className="divide-y divide-border">
+  {units.length === 0 ? (
+    <tr>
+      <td colSpan={9} className="text-center py-6 text-muted-foreground italic">
+        No units found.
+      </td>
+    </tr>
+  ) : (
+    units.map((unit) => (
+      <tr key={unit.id} className="hover:bg-muted/50 transition-colors">
+        <td className="px-6 py-4">{unit.id}</td>
+        <td className="px-6 py-4">{unit.tenant || "Unknown"}</td>
+        <td className="px-6 py-4"><StatusBadge status={unit.status} /></td>
+        <td className="px-6 py-4">{calculateTimeRemaining(unit.startDate, unit.leaseDuration)}</td>
+        <td className="px-6 py-4">{unit.grace || "-"}</td>
+        <td className="px-6 py-4">
+          <PowerControl
+            isOn={unit.power}
+            unitId={unit.id}
+            togglePower={() => togglePower(unit.id)}
+          />
+        </td>
+        <td className="px-6 py-4">{unit.phone || "-"}</td>
+        <td className="px-6 py-4">{unit.rent !== undefined ? `TSh ${unit.rent}` : "-"}</td>
+        <td className="px-6 py-4 flex gap-2">
+          <button
+            onClick={() => onAssignClick(unit.id)}
+            className="p-2 bg-blue-100 hover:bg-blue-200 rounded-md transition-colors"
+            title="Assign Tenant"
+          >
+            <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+          </button>
+          <button
+            onClick={() => deleteUnit(unit.id)}
+            className="p-2 bg-red-100 hover:bg-red-200 rounded-md transition-colors"
+            title="Delete Unit"
+          >
+            🗑️
+          </button>
+        </td>
+      </tr>
+    ))
+  )}
+</tbody>
+
           </table>
         </div>
       </div>
