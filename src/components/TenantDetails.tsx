@@ -26,35 +26,55 @@ export default function TenantDetails() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [newTx, setNewTx] = useState<Transaction>({ date: "", status: "Paid", amount: "" });
 
+  // Load tenants from localStorage "units"
   useEffect(() => {
-    const savedTenants: Tenant[] = JSON.parse(localStorage.getItem("tenants") || "[]");
-    const tenantsWithDefaults: Tenant[] = savedTenants.map((t) => ({
-      ...t,
-      emergencyContact: t.emergencyContact || "Wife",
-      emergencyPhone: t.emergencyPhone || "+255747822160",
-      transactions: t.transactions || [],
-      power: t.power ?? true,
+    const storedUnits = JSON.parse(localStorage.getItem("units") || "[]");
+    const mappedTenants: Tenant[] = storedUnits.map((u: any) => ({
+      name: u.tenant || "Vacant",
+      phone: u.phone || "+255747822160",
+      rent: u.rent || "0",
+      startDate: u.startDate || "",
+      rentPlan: u.rentPlan || "1month",
+      gracePeriod: u.grace || "0",
+      transactions: u.transactions || [],
+      power: u.power ?? false,
+      emergencyContact: u.emergencyContact || "Wife",
+      emergencyPhone: u.emergencyPhone || "+255747822160",
     }));
-    setTenants(tenantsWithDefaults);
+    setTenants(mappedTenants);
   }, []);
 
-  const handleDeleteTenant = (index: number) => {
-    if (window.confirm("Are you sure you want to delete this tenant?")) {
-      const updated = [...tenants];
-      updated.splice(index, 1);
-      setTenants(updated);
-      localStorage.setItem("tenants", JSON.stringify(updated));
-      alert("Tenant deleted successfully");
-    }
+  const updateLocalStorage = (updatedTenants: Tenant[]) => {
+    setTenants(updatedTenants);
+    const updatedUnits = updatedTenants.map((t) => ({
+      tenant: t.name,
+      phone: t.phone,
+      rent: t.rent,
+      startDate: t.startDate,
+      rentPlan: t.rentPlan,
+      grace: t.gracePeriod,
+      transactions: t.transactions,
+      power: t.power,
+      emergencyContact: t.emergencyContact,
+      emergencyPhone: t.emergencyPhone,
+    }));
+    localStorage.setItem("units", JSON.stringify(updatedUnits));
+    localStorage.setItem("tenants", JSON.stringify(updatedTenants));
   };
 
-  const togglePower = (index: number) => {
-  const updated = [...tenants];
-  updated[index].power = !updated[index].power;
-  setTenants(updated);
-  localStorage.setItem("tenants", JSON.stringify(updated));
+ const handleDeleteTenant = (index: number) => {
+  if (window.confirm("Are you sure you want to delete this tenant?")) {
+    const updated = tenants.filter((_, i) => i !== index); // remove tenant completely
+    updateLocalStorage(updated);
+    alert("Tenant deleted successfully");
+  }
 };
 
+  const togglePower = (index: number) => {
+    const updated = [...tenants];
+    updated[index].power = !updated[index].power;
+    updateLocalStorage(updated);
+  };
 
   const addTransaction = (index: number) => {
     if (!newTx.date || !newTx.amount) {
@@ -63,8 +83,7 @@ export default function TenantDetails() {
     }
     const updated = [...tenants];
     updated[index].transactions.push({ ...newTx });
-    setTenants(updated);
-    localStorage.setItem("tenants", JSON.stringify(updated));
+    updateLocalStorage(updated);
     setNewTx({ date: "", status: "Paid", amount: "" });
   };
 
@@ -74,7 +93,6 @@ export default function TenantDetails() {
     <div className="p-4 md:p-8 flex flex-col gap-6">
       {tenants.map((t, index) => (
         <Card key={index} className="p-6 w-full flex flex-col lg:flex-row gap-6">
-
           {/* Left: Profile */}
           <div className="w-full lg:w-1/3 flex flex-col items-center text-center border-r pr-4 gap-2">
             <div className="w-24 h-24 bg-gray-200 rounded-full mb-2" />
@@ -87,17 +105,11 @@ export default function TenantDetails() {
 
           {/* Right: Power, Due Info, Transactions, Actions */}
           <div className="flex-1 flex flex-col gap-4">
-
             {/* Power & Due Info */}
             <div className="flex flex-col sm:flex-row justify-between items-center p-4 border rounded-md">
               <div className="flex items-center gap-2">
                 <p className="font-medium">Power:</p>
-                <Switch
-  defaultChecked={t.power}
-  onChange={() => togglePower(index)}
-/>
-
-
+                <Switch defaultChecked={t.power} onChange={() => togglePower(index)} />
               </div>
               <div className="text-right mt-2 sm:mt-0">
                 <p>Due: {t.startDate}</p>
@@ -134,8 +146,7 @@ export default function TenantDetails() {
                             onClick={() => {
                               const updated = [...tenants];
                               updated[index].transactions.splice(idx, 1);
-                              setTenants(updated);
-                              localStorage.setItem("tenants", JSON.stringify(updated));
+                              updateLocalStorage(updated);
                             }}
                           >
                             🗑
@@ -171,10 +182,7 @@ export default function TenantDetails() {
                   onChange={(e) => setNewTx({ ...newTx, amount: e.target.value })}
                 />
               </div>
-              <Button
-                className="mt-2 bg-blue-600 text-white hover:bg-blue-700 w-full"
-                onClick={() => addTransaction(index)}
-              >
+              <Button className="mt-2 bg-blue-600 text-white hover:bg-blue-700 w-full" onClick={() => addTransaction(index)}>
                 Add Transaction
               </Button>
             </div>
@@ -191,7 +199,6 @@ export default function TenantDetails() {
                 Delete Tenant
               </Button>
             </div>
-
           </div>
         </Card>
       ))}

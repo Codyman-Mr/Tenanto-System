@@ -1,128 +1,156 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, NavLink } from "react-router-dom";
+import { Home as HomeIcon, Grid3X3, Users, Settings } from "lucide-react";
+
+import Home from "./components/ui/Home";
+import Login from "./components/ui/Login";
+import Register from "./components/ui/Register";
+
 import Dashboard from "./components/Dashboard";
-import Units from "./components/Units";
+import Units from "./components/Units"; // default import
 import TenantDetails from "./components/TenantDetails";
 import AssignTenant from "./components/AssignTenant";
 import AddUnit from "./components/AddUnit";
-import Login from "./components/ui/Login";
-import Register from "./components/ui/Register";
-import Home from "./components/ui/Home";
+
+// Protected route wrapper
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const user = JSON.parse(localStorage.getItem("currentUser") || "null");
+  return user ? <>{children}</> : <Navigate to="/login" replace />;
+}
+
+// Layout with sidebar for protected pages
+function ProtectedLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen flex">
+      {/* Sidebar */}
+      <aside className="w-80 bg-gray-800 text-white p-8 flex flex-col">
+        <h1 className="text-3xl font-extrabold mb-10">Tenanto System</h1>
+        <nav className="flex flex-col gap-6 text-lg">
+          <NavLink
+            to="/dashboard"
+            className={({ isActive }) =>
+              `flex items-center gap-4 p-3 rounded-lg transition-colors ${
+                isActive ? "bg-gray-700" : "hover:bg-gray-700/50"
+              }`
+            }
+          >
+            <HomeIcon className="w-7 h-7" /> Dashboard
+          </NavLink>
+
+          <NavLink
+            to="/units"
+            className={({ isActive }) =>
+              `flex items-center gap-4 p-3 rounded-lg transition-colors ${
+                isActive ? "bg-gray-700" : "hover:bg-gray-700/50"
+              }`
+            }
+          >
+            <Grid3X3 className="w-7 h-7" /> Units
+          </NavLink>
+
+          <NavLink
+            to="/tenant-details"
+            className={({ isActive }) =>
+              `flex items-center gap-4 p-3 rounded-lg transition-colors ${
+                isActive ? "bg-gray-700" : "hover:bg-gray-700/50"
+              }`
+            }
+          >
+            <Users className="w-7 h-7" /> Tenant Details
+          </NavLink>
+
+          <NavLink
+            to="/add-unit"
+            className={({ isActive }) =>
+              `flex items-center gap-4 p-3 rounded-lg transition-colors ${
+                isActive ? "bg-gray-700" : "hover:bg-gray-700/50"
+              }`
+            }
+          >
+            <Settings className="w-7 h-7" /> Add Unit
+          </NavLink>
+
+          <button
+            onClick={() => {
+              localStorage.removeItem("currentUser");
+              window.location.href = "/login";
+            }}
+            className="mt-10 text-left text-red-600 hover:text-red-800"
+          >
+            Logout
+          </button>
+        </nav>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 p-10 bg-gray-100 min-h-screen">{children}</main>
+    </div>
+  );
+}
 
 function App() {
   return (
     <Router>
       <Routes>
-        {/* Public routes */}
+        {/* Public Pages */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* Private routes */}
+        {/* Protected Pages with sidebar */}
         <Route
           path="/dashboard"
           element={
-            <div className="min-h-screen flex">
-              <aside className="w-64 bg-gray-100 p-4 hidden md:block">
-                <h1 className="text-lg font-bold mb-6">Tenanto system</h1>
-                <nav className="space-y-2">
-                  <Link to="/dashboard" className="block">Dashboard</Link>
-                  <Link to="/units" className="block">Units</Link>
-                  <Link to="/tenant-details" className="block">Tenant Details</Link>
-                  <Link to="/assign-tenant" className="block">Assign Tenant</Link>
-                  <Link to="/add-unit" className="block">Add Unit</Link>
-                </nav>
-              </aside>
-              <main className="flex-1 p-4">
+            <ProtectedRoute>
+              <ProtectedLayout>
                 <Dashboard />
-              </main>
-            </div>
+              </ProtectedLayout>
+            </ProtectedRoute>
           }
         />
-
         <Route
           path="/units"
           element={
-            <div className="min-h-screen flex">
-              <aside className="w-64 bg-gray-100 p-4 hidden md:block">
-                <h1 className="text-lg font-bold mb-6">Tenanto system</h1>
-                <nav className="space-y-2">
-                  <Link to="/dashboard" className="block">Dashboard</Link>
-                  <Link to="/units" className="block">Units</Link>
-                  <Link to="/tenant-details" className="block">Tenant Details</Link>
-                  <Link to="/assign-tenant" className="block">Assign Tenant</Link>
-                  <Link to="/add-unit" className="block">Add Unit</Link>
-                </nav>
-              </aside>
-              <main className="flex-1 p-4">
+            <ProtectedRoute>
+              <ProtectedLayout>
                 <Units />
-              </main>
-            </div>
+              </ProtectedLayout>
+            </ProtectedRoute>
           }
         />
-
         <Route
           path="/tenant-details"
           element={
-            <div className="min-h-screen flex">
-              <aside className="w-64 bg-gray-100 p-4 hidden md:block">
-                <h1 className="text-lg font-bold mb-6">Tenanto system</h1>
-                <nav className="space-y-2">
-                  <Link to="/dashboard" className="block">Dashboard</Link>
-                  <Link to="/units" className="block">Units</Link>
-                  <Link to="/tenant-details" className="block">Tenant Details</Link>
-                  <Link to="/assign-tenant" className="block">Assign Tenant</Link>
-                  <Link to="/add-unit" className="block">Add Unit</Link>
-                </nav>
-              </aside>
-              <main className="flex-1 p-4">
+            <ProtectedRoute>
+              <ProtectedLayout>
                 <TenantDetails />
-              </main>
-            </div>
+              </ProtectedLayout>
+            </ProtectedRoute>
           }
         />
-
         <Route
           path="/assign-tenant"
           element={
-            <div className="min-h-screen flex">
-              <aside className="w-64 bg-gray-100 p-4 hidden md:block">
-                <h1 className="text-lg font-bold mb-6">Tenanto system</h1>
-                <nav className="space-y-2">
-                  <Link to="/dashboard" className="block">Dashboard</Link>
-                  <Link to="/units" className="block">Units</Link>
-                  <Link to="/tenant-details" className="block">Tenant Details</Link>
-                  <Link to="/assign-tenant" className="block">Assign Tenant</Link>
-                  <Link to="/add-unit" className="block">Add Unit</Link>
-                </nav>
-              </aside>
-              <main className="flex-1 p-4">
+            <ProtectedRoute>
+              <ProtectedLayout>
                 <AssignTenant />
-              </main>
-            </div>
+              </ProtectedLayout>
+            </ProtectedRoute>
           }
         />
-
         <Route
           path="/add-unit"
           element={
-            <div className="min-h-screen flex">
-              <aside className="w-64 bg-gray-100 p-4 hidden md:block">
-                <h1 className="text-lg font-bold mb-6">Tenanto system</h1>
-                <nav className="space-y-2">
-                  <Link to="/dashboard" className="block">Dashboard</Link>
-                  <Link to="/units" className="block">Units</Link>
-                  <Link to="/tenant-details" className="block">Tenant Details</Link>
-                  <Link to="/assign-tenant" className="block">Assign Tenant</Link>
-                  <Link to="/add-unit" className="block">Add Unit</Link>
-                </nav>
-              </aside>
-              <main className="flex-1 p-4">
+            <ProtectedRoute>
+              <ProtectedLayout>
                 <AddUnit />
-              </main>
-            </div>
+              </ProtectedLayout>
+            </ProtectedRoute>
           }
         />
+
+        {/* Catch-all */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );

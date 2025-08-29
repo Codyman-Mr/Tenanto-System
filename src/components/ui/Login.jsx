@@ -15,6 +15,8 @@ const Login = () => {
     );
 
     if (user) {
+      // ✅ Fix: set current user in localStorage
+      localStorage.setItem("currentUser", JSON.stringify(user));
       alert(`Logged in as ${role}: ${name}`);
       navigate("/dashboard");
     } else {
